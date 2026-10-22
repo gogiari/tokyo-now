@@ -1,0 +1,54 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="지금 여기"><link rel="manifest" href="manifest.json"><title>지금 여기서 뭐 하지?</title><style>
+:root{--bg:#FFFBF7;--fg:#2B2B2B;--card:#fff;--sub:#777;--pt:#E86A6A}
+body.night{--bg:#141826;--fg:#EEE;--card:#1F2438;--sub:#9AA}
+*{box-sizing:border-box}body{margin:0;font-family:Pretendard,-apple-system,sans-serif;background:var(--bg);color:var(--fg);font-size:15px;padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+iframe{width:100%;height:35vh;border:0;display:block}
+.sheet{margin-top:-16px;background:var(--bg);border-radius:16px 16px 0 0;position:relative;padding:16px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--sub);font-size:13px}
+.row{display:flex;gap:8px;overflow-x:auto;margin:12px 0}
+.mood,.chip{flex:none;border:1px solid #8884;background:var(--card);color:var(--fg);border-radius:18px;height:36px;padding:0 14px;font-size:14px}
+.mood.on{background:var(--fg);color:var(--bg)}.chip.on{color:#fff;border-color:transparent}
+label{font-size:13px;display:flex;gap:6px;align-items:center}
+.card{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:16px;padding:12px;margin:8px 0}
+.th{width:64px;height:64px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-size:28px}
+.card .n{word-break:keep-all;font-weight:600}.open{color:#2a9d6f}.closed{color:#c55}
+.card a{margin-left:auto;flex:none;background:var(--pt);color:#fff;text-decoration:none;padding:8px 10px;border-radius:10px;font-size:13px}
+#rand{white-space:nowrap;position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);height:56px;padding:0 28px;border:0;border-radius:28px;background:var(--pt);color:#fff;font-size:16px;font-weight:700;box-shadow:0 4px 14px #0004}
+.b{font-size:12px;padding:2px 6px;border-radius:6px;margin-left:4px}.bo{background:#2a9d6f22;color:#2a9d6f}.bc{background:#c5555522;color:#c55}.bu{background:#8883;color:var(--sub)}.bt{background:#c55;color:#fff}.dim{opacity:.5}.hl{outline:3px solid var(--pt)}
+</style></head><body>
+<iframe id="map"></iframe>
+<div class="sheet"><h1>지금 여기서 뭐 하지?</h1>
+<div class="sub">기준: 호텔 니와 도쿄 (간다) · 언급 수는 10/22 기준 · 도보 시간은 추정치</div>
+<div class="row" id="moods"></div><div class="row" id="chips"></div>
+<div class="row"><button class="chip" id="sh" onclick="sort='hot';render()">🔥 언급 많은 순</button><button class="chip" id="sn" onclick="sort='near';render()">🚶 가까운 순</button><label><input type="checkbox" id="openOnly" onchange="render()"> 지금 열린 곳만</label></div>
+<div id="list"></div></div>
+<button id="rand" onclick="rand()">🔥 지금 가장 핫한 곳</button>
+<script>
+const C={food:["🍜 먹거리","#C8705A"],sightseeing:["⛩️ 구경거리","#8A9A7B"],onsen_rest:["♨️ 온천·휴식","#E2B76A"],shopping:["🛍️ 쇼핑","#4E5A8C"],night_view:["🌃 야경","#6E4E6E"],cafe:["☕ 카페","#EADCC2"]};
+let P=[];
+const M={"배고파":["food","cafe"],"피곤해":["onsen_rest","cafe"],"비 와":["shopping","onsen_rest","cafe"],"밤이야":["night_view","food"]};
+let sort="hot";
+const D=["sun","mon","tue","wed","thu","fri","sat"];
+function tm(s){const[a,b]=s.split(":");return +a*60+ +b}
+function st(p){if(p.tc)return{t:"tc"};if(!p.h)return{t:"u"};const n=new Date(),m=n.getHours()*60+n.getMinutes(),d=n.getDay();
+const td=p.h[D[d]],yd=p.h[D[(d+6)%7]];if(td==null)return{t:"u"};
+for(const[o,c]of td){if(m>=tm(o)&&m<tm(c))return{t:"o",c:tm(c)>=1440?(tm(c)==1440?null:String(tm(c)/60-24|0).padStart(2,"0")+c.slice(2)):c}}
+for(const[o,c]of(yd||[])){if(tm(c)>1440&&m+1440<tm(c))return{t:"o",c:String(tm(c)/60-24|0).padStart(2,"0")+c.slice(2)}}
+return{t:"c"}}
+function badge(x){return x.t=="o"?`<span class="b bo">영업 중${x.c&&x.c!="24:00"?" · "+x.c+" 마감":""}</span>`:x.t=="c"?'<span class="b bc">영업 끝</span>':x.t=="tc"?'<span class="b bt">임시 휴업</span>':'<span class="b bu">영업시간 확인 필요</span>'}
+const ord=x=>x.t=="tc"?3:(openOnly.checked&&x.t!="o")?(x.t=="u"?1:2):0;
+
+let mood=null,cat=null,pick=null;const h=new Date().getHours();if(h>=18||h<6)document.body.classList.add("night");
+
+const map=q=>document.getElementById("map").src="https://maps.google.com/maps?q="+encodeURIComponent(q)+"&z=15&output=embed";
+const gl=q=>"https://www.google.com/maps/dir/?api=1&travelmode=walking&destination="+encodeURIComponent(q+" Tokyo");
+function render(){
+moods.innerHTML=Object.keys(M).map(k=>`<button class="mood ${k==mood?'on':''}" onclick="mood=mood=='${k}'?null:'${k}';cat=null;render()">${k}</button>`).join("");
+chips.innerHTML=Object.entries(C).filter(([k])=>!mood||M[mood].includes(k)).map(([k,[n,c]])=>`<button class="chip ${k==cat?'on':''}" style="${k==cat?'background:'+c:''}" onclick="cat=cat=='${k}'?null:'${k}';render()">${n}</button>`).join("");
+sh.className="mood "+(sort=="hot"?"on":"");sn.className="mood "+(sort=="near"?"on":"");
+const L=P.filter(p=>(p.w<=20||p.ko.includes("기타노마루"))&&(!cat||p.k==cat)&&(!mood||M[mood].includes(p.k))).map(p=>(p.st=st(p),p)).sort((a,b)=>ord(a.st)-ord(b.st)||(sort=="hot"?(b.s-a.s):(a.w-b.w))).filter(p=>!(openOnly.checked&&p.st.t=="c"));
+list.innerHTML=L.map(p=>`<div class="card ${p==pick?'hl':''} ${p.st.t=="tc"?'dim':''}" onclick="map('${p.lat},${p.lng}')"><div class="th" style="background:${C[p.k][1]}">${C[p.k][0].split(" ")[0]}</div><div><div class="n">${p.ko} <span style="color:var(--pt);font-size:13px">🔥 ${C[p.k][0].split(" ")[1]} ${p.r}위${p.warn?' <span onclick="event.stopPropagation();alert(\'언급 수가 부정확할 수 있어요\')">ⓘ</span>':''}</span></div><div class="sub">약 ${p.w}분 ${badge(p.st)}${p.ko.includes("사바쇼")?'<span class="b bu">현금만</span>':''}${p.ko.includes("산코엔")&&new Date().getDay()==0?'<span class="b bu">일요일 휴무일 수 있음</span>':''}</div><div class="sub">${p.g!=null?'구글 리뷰 '+p.g+(p.gr?' ★'+p.gr:'')+' · ':''}${p.tb!=null?'타베로그 리뷰 '+p.tb+' · ':''}X 7일 ${p.x??'-'}건(10/22)</div></div><a href="https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=${p.lat},${p.lng}" target="_blank">길찾기</a></div>`).join("")||'<p class="sub">조건에 맞는 곳이 없어요.</p>'}
+function rand(){const c=P.filter(p=>p.w<=15&&st(p).t=="o"&&(!cat||p.k==cat)&&(!mood||M[mood].includes(p.k))).sort((a,b)=>b.s-a.s);if(!c.length)return alert("지금 15분 안에 열린 곳이 없어요");pick=c[0];sort="hot";render();map(pick.lat+","+pick.lng);document.querySelector(".hl").scrollIntoView({behavior:"smooth",block:"center"})}
+map("Hotel Niwa Tokyo");fetch("data.json?"+Date.now()).then(r=>r.json()).then(d=>{P=Array.isArray(d)?d:d.places;if(d.updated){const u=document.createElement("p");u.className="sub";u.style.textAlign="center";u.textContent="정보 기준 "+d.updated.slice(5,16).replace("T"," ")+" (도쿄 시간)";list.after(u)}render()});
+</script></body></html>
