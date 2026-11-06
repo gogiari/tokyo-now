@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e7f0e6" data-day="#e7f0e6" data-night="#101614">
+<title>지금 여기 뭐 하지?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap">
+<style>
+  :root {
+    --bg: #e7f0e6;
+    --ink: #1b2822;
+    --muted: #5c6d64;
+    --card: #fffcf7;
+    --line: #d3e0d6;
+    --accent: #ef5b3c;
+    --accent-ink: #fff;
+    --open: #0e7a49;
+    --closed: #c44538;
+    --unknown: #627068;
+    --bar: #fffcf7;
+    --shadow: 0 10px 24px rgba(36, 72, 48, .08);
+    color-scheme: light;
+  }
+  body.night {
+    --bg: #101614;
+    --ink: #eef6f1;
+    --muted: #b7c9bf;
+    --card: #1a2420;
+    --line: #314039;
+    --accent: #ff7a5c;
+    --accent-ink: #2a100c;
+    --open: #8ee0b5;
+    --closed: #ffb4a8;
+    --unknown: #c9d6ce;
+    --bar: #18211d;
+    --shadow: 0 12px 28px rgba(0, 0, 0, .32);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scrollbar-width: none; }
+  html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: "Gowun Dodum", "Noto Sans KR", "WenQuanYi Micro Hei", sans-serif;
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.45;
+    background:
+      radial-gradient(480px 240px at 110% -8%, rgba(255, 176, 138, .55), transparent 62%),
+      radial-gradient(380px 220px at -20% 8%, rgba(156, 206, 176, .7), transparent 64%),
+      var(--bg);
+  }
+  body.night {
+    background:
+      radial-gradient(480px 240px at 110% -8%, rgba(255, 122, 92, .18), transparent 62%),
+      radial-gradient(380px 220px at -20% 8%, rgba(70, 140, 108, .22), transparent 64%),
+      var(--bg);
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  [hidden] { display: none !important; }
+  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 18px 4px; }
+  .where { margin: 0; color: var(--muted); font-size: 13px; }
+  h1 { margin: 2px 0 0; font-size: 26px; font-weight: 400; letter-spacing: -.03em; line-height: 1.25; word-break: keep-all; }
+  #dataDate { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; color: var(--muted); font-size: 13px; }
+  .old {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--bg);
+    font-size: 11px;
+  }
+  #theme {
+    flex: none;
+    width: 52px;
+    height: 52px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    font-size: 13px;
+  }
+  .moods { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px 18px 4px; }
+  .moods button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 62px;
+    padding: 6px 2px;
+    border: 0;
+    border-radius: 18px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+  }
+  .moods button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .mood-ico { font-size: 16px; line-height: 1; }
+  .mood-name { font-size: 12px; letter-spacing: -.03em; }
+  .map-block { padding: 12px 18px 0; }
+  .map-wrap {
+    height: clamp(200px, 32vh, 280px);
+    border-radius: 22px;
+    overflow: hidden;
+    background:
+      linear-gradient(160deg, rgba(255,255,255,.35), transparent 40%),
+      repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(27, 40, 34, .05) 19px),
+      #d5e6da;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  body.night .map-wrap {
+    background:
+      repeating-linear-gradient(90deg, transparent, transparent 18px, rgba(255,255,255,.04) 19px),
+      #24312b;
+  }
+  .map-wrap iframe { width: 100%; height: 100%; border: 0; display: block; }
+  body.night .map-wrap iframe { filter: brightness(.78); }
+  .map-cap {
+    position: absolute;
+    z-index: 2;
+    left: 12px;
+    top: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--ink);
+    font-size: 12px;
+    box-shadow: var(--shadow);
+  }
+  .map-wrap.collapsed { height: 0; min-height: 0; box-shadow: none; border-radius: 0; }
+  .map-wrap.collapsed iframe, .map-wrap.collapsed .map-cap { display: none; }
+  #mapToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 8px;
+    min-height: 42px;
+    border-radius: 14px;
+    border: 1.5px dashed color-mix(in srgb, var(--ink) 25%, var(--line));
+    background: transparent;
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .chip-scroller {
+    margin-top: 12px;
+    -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent);
+    mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent);
+  }
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 18px 8px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips button {
+    flex: none;
+    min-height: 38px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--card);
+    box-shadow: 0 1px 0 var(--line);
+    font-size: 13px;
+  }
+  .chips button[aria-pressed="true"] { background: var(--tone, var(--ink)); color: #fff; }
+  .sorts { display: flex; gap: 8px; padding: 2px 18px 10px; }
+  .sorts button {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: var(--muted);
+  }
+  .sorts button[aria-pressed="true"] { background: var(--card); color: var(--ink); border-color: var(--line); }
+  #list { padding: 0 0 128px; }
+  .ticket {
+    display: flex;
+    margin: 0 18px 12px;
+    background: var(--card);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    scroll-margin: 16px 0 140px;
+  }
+  .ticket.is-on { box-shadow: 0 0 0 2px var(--ink); }
+  .ticket.is-hot { box-shadow: 0 0 0 2px var(--accent); }
+  .stub {
+    width: 74px;
+    flex: none;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at right top, transparent 8px, var(--tone) 8.5px) top right / 100% 51% no-repeat,
+      radial-gradient(circle at right bottom, transparent 8px, var(--tone) 8.5px) bottom right / 100% 51% no-repeat;
+  }
+  .mins { font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .unit { font-size: 12px; margin-top: 1px; }
+  .walklabel { font-size: 11px; opacity: .9; margin-top: 2px; }
+  .main { min-width: 0; flex: 1; padding: 12px 12px 10px; border-left: 1.5px dashed var(--line); }
+  .rank { margin: 0; color: var(--muted); font-size: 12px; }
+  .name { margin: 2px 0 0; font-size: 17px; font-weight: 400; line-height: 1.35; letter-spacing: -.03em; word-break: keep-all; }
+  .foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; margin-top: 8px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 3px 6px; margin: 0; min-width: 0; font-size: 12px; }
+  .walk { color: var(--muted); }
+  .st { font-weight: 400; }
+  .st.o { color: var(--open); }
+  .st.c, .st.tc { color: var(--closed); }
+  .st.u { color: var(--unknown); }
+  .go {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 0 2px 0 8px;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .details { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.55; }
+  .details p { margin: 6px 0 0; }
+  .badges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .b { display: inline-flex; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--ink) 8%, transparent); }
+  .empty { margin: 12px 18px; text-align: center; color: var(--muted); }
+  .clear {
+    display: block;
+    margin: 0 auto;
+    min-height: 42px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--card);
+    box-shadow: var(--shadow);
+  }
+  .bottom-bar {
+    position: fixed;
+    z-index: 20;
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 8px 8px 14px;
+    background: var(--bar);
+    border-radius: 22px;
+    box-shadow: 0 12px 36px rgba(20, 40, 28, .16);
+  }
+  .switch { position: relative; display: flex; align-items: center; gap: 8px; min-height: 48px; cursor: pointer; white-space: nowrap; }
+  .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .track {
+    width: 46px;
+    height: 28px;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--ink) 12%, var(--card));
+    box-shadow: inset 0 0 0 1px var(--line);
+    position: relative;
+    flex: none;
+  }
+  .track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: transform .18s ease;
+  }
+  .switch input:checked + .track { background: var(--accent); box-shadow: none; }
+  .switch input:checked + .track::after { transform: translateX(18px); background: #fff; }
+  .switch input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 3px; }
+  #rand {
+    flex: 1;
+    min-width: 0;
+    min-height: 48px;
+    border: 0;
+    border-radius: 16px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 15px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <p class="where">호텔 니와에서 · 도보 추정</p>
+    <h1>지금 여기 뭐 하지?</h1>
+    <div id="dataDate"></div>
+  </div>
+  <button id="theme" type="button" aria-label="화면 모드: 자동">자동</button>
+</header>
+<div class="moods" id="moods" role="group" aria-label="기분"></div>
+<div class="map-block">
+  <div class="map-wrap" id="mapWrap">
+    <iframe id="map" title="주변 장소 지도"></iframe>
+    <span class="map-cap">주변 지도</span>
+  </div>
+  <button id="mapToggle" type="button" aria-expanded="true" aria-controls="map">지도 접기</button>
+</div>
+<div class="chip-scroller"><div class="chips" id="chips" role="group" aria-label="카테고리"></div></div>
+<div class="sorts" role="group" aria-label="정렬">
+  <button type="button" id="sortHot" aria-pressed="true">인기순</button>
+  <button type="button" id="sortNear" aria-pressed="false">가까운 순</button>
+</div>
+<div id="list"></div>
+<div class="bottom-bar">
+  <label class="switch">
+    <input id="openOnly" type="checkbox" role="switch">
+    <span class="track" aria-hidden="true"></span>
+    <span>열린 곳</span>
+  </label>
+  <button id="rand" type="button">🔥 지금 갈 만한 곳</button>
+</div>
+<script>
+const THEME_KEY = "themeMode-k3";
+const MOOD_ICON = { "배고파": "🍽️", "피곤해": "🫧", "비 와": "☔", "밤이야": "🌙" };
+
+function cardHTML(place, st, index) {
+  const on = selected === place;
+  const hot = pick === place;
+  const info = CATS[place.k] || ["📍", "기타"];
+  const tone = TONE[place.k] || "#607068";
+  const close = st.t === "o" && st.c ? '<span class="until">' + esc(st.c) + " 마감</span>" : "";
+  return '<article class="ticket' + (on ? " is-on" : "") + (hot ? " is-hot" : "") + '" id="card-' + index + '" data-i="' + index + '" data-walk="' + place.w + '" data-score="' + place.s + '" data-status="' + st.t + '" tabindex="0" aria-expanded="' + on + '" aria-controls="details-' + index + '" style="--tone:' + tone + '">' +
+    '<div class="stub"><span class="mins">' + esc(place.w) + '</span><span class="unit">분</span><span class="walklabel">도보</span></div>' +
+    '<div class="main"><p class="rank">' + info[0] + " " + esc(info[1]) + " " + esc(place.r) + "위</p>" +
+    '<h2 class="name">' + esc(place.ko) + "</h2>" +
+    '<div class="foot"><p class="facts"><span class="walk">도보 ' + esc(place.w) + '분</span><span class="st ' + st.t + '">' + statusText(st) + "</span>" + close + "</p>" +
+    '<a class="go" href="' + dirUrl(place) + '" target="_blank" rel="noopener">길찾기</a></div>' +
+    '<div class="details" id="details-' + index + '"' + (on ? "" : " hidden") + ">" + detailsHTML(place, st) + "</div></div></article>";
+}
+
+const THEMES = ["자동", "낮", "밤"];
+const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const CATS = {
+  food: ["🍜", "먹거리"],
+  sightseeing: ["⛩️", "구경거리"],
+  onsen_rest: ["♨️", "온천·휴식"],
+  shopping: ["🛍️", "쇼핑"],
+  night_view: ["🌃", "야경"],
+  cafe: ["☕", "카페"],
+};
+const MOODS = {
+  "배고파": ["food", "cafe"],
+  "피곤해": ["onsen_rest", "cafe"],
+  "비 와": ["shopping", "onsen_rest", "cafe"],
+  "밤이야": ["night_view", "food"],
+};
+const TONE = {
+  food: "#d84b32",
+  sightseeing: "#1f6f5b",
+  onsen_rest: "#9a6210",
+  shopping: "#33468a",
+  night_view: "#68407f",
+  cafe: "#8d5a3b",
+};
+
+let places = [];
+let updatedLabel = "";
+let sortMode = "hot";
+let mood = null;
+let cat = null;
+let selected = null;
+let pick = null;
+let themeMode = "자동";
+
+const clockFmt = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Tokyo",
+  weekday: "short",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+function tokyoNow(date = new Date()) {
+  const parts = Object.fromEntries(clockFmt.formatToParts(date).map((part) => [part.type, part.value]));
+  let h = Number(parts.hour);
+  if (h === 24) h = 0;
+  const minute = Number(parts.minute);
+  return {
+    d: DAYS.indexOf(String(parts.weekday).toLowerCase()),
+    h,
+    minute,
+    m: h * 60 + minute,
+    ymd: parts.year + "-" + parts.month + "-" + parts.day,
+  };
+}
+
+function toMin(value) {
+  const bits = String(value).split(":");
+  return Number(bits[0]) * 60 + Number(bits[1]);
+}
+
+function closeLabel(value) {
+  const mins = toMin(value);
+  if (mins >= 1440) {
+    if (mins === 1440) return null;
+    return String(Math.floor(mins / 60) - 24).padStart(2, "0") + String(value).slice(2);
+  }
+  return value;
+}
+
+function statusOf(place, now = tokyoNow()) {
+  if (place.tc) return { t: "tc" };
+  if (!place.h) return { t: "u" };
+  const todayKey = DAYS[now.d];
+  const ydayKey = DAYS[(now.d + 6) % 7];
+  const today = place.h[todayKey];
+  const yesterday = place.h[ydayKey];
+  for (const range of Array.isArray(today) ? today : []) {
+    const openAt = toMin(range[0]);
+    const closeAt = toMin(range[1]);
+    if (now.m >= openAt && now.m < closeAt) return { t: "o", c: closeLabel(range[1]) };
+  }
+  for (const range of Array.isArray(yesterday) ? yesterday : []) {
+    const openAt = toMin(range[0]);
+    const closeAt = toMin(range[1]);
+    if (closeAt > 1440 && now.m + 1440 >= openAt && now.m + 1440 < closeAt) {
+      return { t: "o", c: closeLabel(range[1]) };
+    }
+  }
+  return { t: today == null ? "u" : "c" };
+}
+
+function statusRank(st, openOnly) {
+  if (st.t === "tc") return 3;
+  if (openOnly && st.t !== "o") return st.t === "u" ? 1 : 2;
+  return 0;
+}
+
+function statusText(st) {
+  if (st.t === "o") return "영업 중";
+  if (st.t === "c") return "영업 끝";
+  if (st.t === "tc") return "임시 휴업";
+  return "영업시간 확인 필요";
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[ch]));
+}
+
+function fmt(value) {
+  return value == null ? "-" : Number(value).toLocaleString("ko-KR");
+}
+
+function dirUrl(place) {
+  return "https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=" + place.lat + "," + place.lng;
+}
+
+function eligible(place) {
+  return place.w <= 20 || String(place.ko).includes("기타노마루");
+}
+
+function visibleRows() {
+  const openOnly = document.getElementById("openOnly").checked;
+  return places
+    .filter((place) => eligible(place) && (!cat || place.k === cat) && (!mood || MOODS[mood].includes(place.k)))
+    .map((place) => ({ p: place, st: statusOf(place) }))
+    .sort((a, b) => {
+      const byStatus = statusRank(a.st, openOnly) - statusRank(b.st, openOnly);
+      if (byStatus) return byStatus;
+      return sortMode === "hot" ? b.p.s - a.p.s : a.p.w - b.p.w;
+    })
+    .filter((row) => !(openOnly && row.st.t !== "o"));
+}
+
+function detailsHTML(place, st) {
+  const now = tokyoNow();
+  const badges = ['<span class="b ' + st.t + '">' + statusText(st) + "</span>"];
+  if (String(place.ko).includes("사바쇼")) badges.push('<span class="b u">현금만</span>');
+  if (String(place.ko).includes("산코엔") && now.d === 0) badges.push('<span class="b u">일요일 휴무일 수 있음</span>');
+  const bits = [];
+  if (place.g != null) bits.push("리뷰 " + fmt(place.g) + (place.gr ? " ★" + esc(place.gr) : "") + " (구글 지도)");
+  if (place.tb != null) bits.push("타베로그 리뷰 " + fmt(place.tb));
+  bits.push("X 7일 " + fmt(place.x) + "건" + (updatedLabel ? " (" + esc(updatedLabel) + ")" : ""));
+  const warn = place.warn ? '<p class="warn">ⓘ 언급 수가 부정확할 수 있어요</p>' : "";
+  const closedNote = place.tc ? '<p class="tcnote">' + esc(place.tc) + "</p>" : "";
+  return '<div class="badges">' + badges.join("") + "</div><p>" + bits.join(" · ") + "</p>" + warn + closedNote;
+}
+
+function mapQuery(query) {
+  document.getElementById("map").src = "https://maps.google.com/maps?q=" + encodeURIComponent(query) + "&z=15&output=embed";
+}
+
+function applyTheme() {
+  const now = tokyoNow();
+  const night = themeMode === "밤" || (themeMode === "자동" && (now.h >= 18 || now.h < 6));
+  document.body.classList.toggle("night", night);
+  const button = document.getElementById("theme");
+  button.textContent = themeMode;
+  button.setAttribute("aria-label", "화면 모드: " + themeMode);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", night ? meta.getAttribute("data-night") : meta.getAttribute("data-day"));
+  const clock = document.getElementById("clock");
+  if (clock) clock.textContent = "도쿄 " + String(now.h).padStart(2, "0") + ":" + String(now.minute).padStart(2, "0");
+}
+
+function cycleTheme() {
+  themeMode = THEMES[(THEMES.indexOf(themeMode) + 1) % THEMES.length];
+  try { localStorage.setItem(THEME_KEY, themeMode); } catch (err) { /* private mode */ }
+  applyTheme();
+}
+
+function renderUpdated(updated) {
+  const slot = document.getElementById("dataDate");
+  if (!updated) {
+    updatedLabel = "";
+    slot.innerHTML = "";
+    return;
+  }
+  updatedLabel = String(updated).slice(5, 10).replace("-", "/");
+  const ymd = (value) => new Date(value).toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+  const stale = ymd(updated) !== ymd(new Date());
+  slot.innerHTML = (stale ? '<span class="old">어제 데이터</span>' : "") + '<span class="when">' + esc(updatedLabel) + " 기준 정보</span>";
+}
+
+function moodInner(key) {
+  if (typeof MOOD_ICON !== "undefined" && MOOD_ICON && MOOD_ICON[key]) {
+    return '<span class="mood-ico" aria-hidden="true">' + MOOD_ICON[key] + '</span><span class="mood-name">' + esc(key) + "</span>";
+  }
+  return esc(key);
+}
+
+function renderMoods() {
+  document.getElementById("moods").innerHTML = Object.keys(MOODS).map((key) => {
+    return '<button type="button" data-mood="' + esc(key) + '" aria-pressed="' + (mood === key) + '">' + moodInner(key) + "</button>";
+  }).join("");
+}
+
+function renderChips() {
+  const keys = Object.keys(CATS).filter((key) => !mood || MOODS[mood].includes(key));
+  document.getElementById("chips").innerHTML = keys.map((key) => {
+    const emoji = CATS[key][0];
+    const name = CATS[key][1];
+    return '<button type="button" class="chip" data-cat="' + key + '" aria-pressed="' + (cat === key) + '" style="--tone:' + (TONE[key] || "") + '">' + emoji + " " + esc(name) + "</button>";
+  }).join("");
+}
+
+function renderSort() {
+  document.getElementById("sortHot").setAttribute("aria-pressed", String(sortMode === "hot"));
+  document.getElementById("sortNear").setAttribute("aria-pressed", String(sortMode === "near"));
+}
+
+function renderList() {
+  const rows = visibleRows();
+  const count = document.getElementById("count");
+  if (count) count.textContent = rows.length + "곳";
+  const list = document.getElementById("list");
+  if (!rows.length) {
+    const openOnly = document.getElementById("openOnly").checked;
+    list.innerHTML = '<p class="empty">조건에 맞는 곳이 없어요.</p>' + (openOnly ? '<button type="button" class="clear" id="clearOpen">필터 해제</button>' : "");
+    return;
+  }
+  list.innerHTML = rows.map((row) => cardHTML(row.p, row.st, places.indexOf(row.p))).join("");
+}
+
+function render() {
+  renderMoods();
+  renderChips();
+  renderSort();
+  renderList();
+}
+
+function selectCard(index) {
+  const place = places[index];
+  if (!place) return;
+  selected = selected === place ? null : place;
+  mapQuery(place.lat + "," + place.lng);
+  render();
+  const card = document.getElementById("card-" + index);
+  if (card) card.focus({ preventScroll: true });
+}
+
+function randPick() {
+  const pool = places
+    .filter((place) => place.w <= 15 && statusOf(place).t === "o" && (!cat || place.k === cat) && (!mood || MOODS[mood].includes(place.k)))
+    .sort((a, b) => b.s - a.s);
+  if (!pool.length) {
+    alert("지금 15분 안에 열린 곳이 없어요");
+    return;
+  }
+  pick = pool[0];
+  sortMode = "hot";
+  mapQuery(pick.lat + "," + pick.lng);
+  render();
+  const card = document.getElementById("card-" + places.indexOf(pick));
+  if (card) card.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function toggleMap() {
+  const wrap = document.getElementById("mapWrap");
+  const collapsed = wrap.classList.toggle("collapsed");
+  const button = document.getElementById("mapToggle");
+  button.textContent = collapsed ? "지도 펼치기" : "지도 접기";
+  button.setAttribute("aria-expanded", String(!collapsed));
+}
+
+function bind() {
+  document.getElementById("theme").addEventListener("click", cycleTheme);
+  document.getElementById("mapToggle").addEventListener("click", toggleMap);
+  document.getElementById("rand").addEventListener("click", randPick);
+  document.getElementById("openOnly").addEventListener("change", render);
+  document.getElementById("sortHot").addEventListener("click", () => { sortMode = "hot"; render(); });
+  document.getElementById("sortNear").addEventListener("click", () => { sortMode = "near"; render(); });
+  document.getElementById("moods").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    const key = button.dataset.mood;
+    mood = mood === key ? null : key;
+    cat = null;
+    render();
+  });
+  document.getElementById("chips").addEventListener("click", (event) => {
+    const button = event.target.closest("button");
+    if (!button) return;
+    const key = button.dataset.cat;
+    cat = cat === key ? null : key;
+    render();
+  });
+  const list = document.getElementById("list");
+  list.addEventListener("click", (event) => {
+    if (event.target.closest("a")) return;
+    if (event.target.closest("#clearOpen")) {
+      document.getElementById("openOnly").checked = false;
+      render();
+      return;
+    }
+    const card = event.target.closest("[data-i]");
+    if (!card) return;
+    selectCard(Number(card.dataset.i));
+  });
+  list.addEventListener("keydown", (event) => {
+    if (event.target.closest("a")) return;
+    const card = event.target.closest("[data-i]");
+    if (!card || event.target !== card) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      selectCard(Number(card.dataset.i));
+    }
+  });
+}
+
+try {
+  const saved = localStorage.getItem(THEME_KEY);
+  if (THEMES.includes(saved)) themeMode = saved;
+} catch (err) { /* ignore */ }
+
+applyTheme();
+bind();
+mapQuery("Hotel Niwa Tokyo");
+setInterval(() => {
+  applyTheme();
+  if (places.length) render();
+}, 60000);
+
+fetch("data.json?" + Date.now())
+  .then((res) => {
+    if (!res.ok) throw new Error(String(res.status));
+    return res.json();
+  })
+  .then((data) => {
+    places = Array.isArray(data) ? data : (data.places || []);
+    renderUpdated(Array.isArray(data) ? "" : data.updated);
+    render();
+    document.body.classList.add("ready");
+  })
+  .catch(() => {
+    document.getElementById("list").innerHTML = '<p class="empty">장소 데이터를 불러오지 못했어요.</p>';
+  });
+
+</script>
+</body>
+</html>
